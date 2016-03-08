@@ -1,0 +1,73 @@
+---
+title: "Reproducible Research: Project 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading Data and Loading Packages
+
+```{r Loading Data}
+library(ggplot2)
+
+rawData <- read.csv("activity.csv")
+```
+
+## What is the mean total number of steps taken each day?
+
+```{r Steps taken each Day}
+stepsPerDay <- aggregate(rawData$steps, 
+                         by = list(rawData$date), 
+                         FUN = sum,
+                         na.rm = TRUE)
+hist(stepsPerDay$x)
+
+mean(stepsPerDay$x)
+
+median(stepsPerDay$x)
+```
+
+## What is the daily average activity pattern?
+
+```{r section1}
+stepsPerPeriod <- aggregate(rawData$steps,
+                            by = list(rawData$interval),
+                            FUN = mean,
+                            na.rm = TRUE)
+
+plot(stepsPerPeriod$Group.1, stepsPerPeriod$x, type = "l")
+
+stepsPerPeriod$Group.1[stepsPerPeriod$x == max(stepsPerPeriod$x)]
+```
+
+
+## Imputing missing values
+
+```{r Imputing Missing Values}
+imputedData <- rawData
+
+names(stepsPerPeriod)[1] <- "interval"
+
+imputedData <- merge(imputedData, stepsPerPeriod, by = "interval")
+
+imputedData[is.na(imputedData$steps), 2] <- imputedData[is.na(imputedData$steps), 4]
+```
+
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+```{r Weekdays versus Weekends}
+rawData$weekDay <- as.factor(weekdays(as.Date(rawData$date)))
+
+levels(rawData$weekDay) <- c("weekday", "weekday", "weekend", "weekend", "weekday", "weekday", "weekday")
+
+weekdayPeriods <- aggregate(rawData$steps,
+                            by = list(rawData$weekDay, rawData$interval),
+                            FUN = mean,
+                            na.rm = TRUE)
+
+plt <- ggplot(weekdayPeriods, aes(Group.2, x)) + geom_line()
+plt + facet_grid(. ~ Group.1)
+```
